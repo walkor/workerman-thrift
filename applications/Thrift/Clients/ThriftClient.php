@@ -306,31 +306,45 @@ class ThriftInstance
      */
     protected function __instance()
     {
+        // 获取一个服务端节点地址
         $address = ThriftClient\AddressManager::getOneAddress($this->serviceName);
         list($ip, $port) = explode(':', $address);
+        
+        // Transport
         $socket = new Thrift\Transport\TSocket($ip, $port);
         $transport_name = ThriftClient::getTransport($this->serviceName);
         $transport = new $transport_name($socket);
+        // Protocol
         $protocol_name = ThriftClient::getProtocol($this->serviceName);
         $protocol = new $protocol_name($transport);
-        
-        $classname = "Services\\" . $this->serviceName . "\\" . $this->serviceName . "Client";
         try 
         {
             $transport->open();
         }
         catch(\Exception $e)
         {
+            // 无法连上，则踢掉这个地址
             ThriftClient::kickAddress($address);
             throw $e;
         }
+
+        // 客户端类名称
+        $class_name = "Services\\" . $this->serviceName . "\\" . $this->serviceName . "Client";
+        $client_file = THRIFT_CLIENT . '/../Services/'. $this->serviceName . '/' . $this->serviceName . '.php';
+        if(!class_exists($class_name) && !is_file($client_file))
+        {
+            throw new \Exception("File $client_file not exsits");
+        }
+        require_once $client_file;
         
-        return new $classname($protocol);
+        // 初始化一个实例
+        return new $class_name($protocol);
     }
 }
 
 
-if(true)
+/***********以下是测试代码***********/
+if(false)
 {
     ThriftClient::config(array(
                          'HelloWorld' => array(
@@ -350,5 +364,20 @@ if(true)
              );
     $client = ThriftClient::instance('HelloWorld');
     
+    // 同步
+    echo "async send and recv sayHello(\"TOM\")\n";
     var_export($client->sayHello("TOM"));
+    
+    // 异步
+    echo "\nasync send request asend_sayHello(\"JERRY\") asend_sayHello(\"KID\")\n";
+    $client->asend_sayHello("JERRY");
+    $client->asend_sayHello("KID");
+    
+    // 这里是其它业务逻辑
+    echo "sleep 1 second now\n";
+    sleep(1);
+    
+    echo "\nasync recv response arecv_sayHello(\"KID\") arecv_sayHello(\"JERRY\")\n";
+    var_export($client->arecv_sayHello("KID"));
+    var_export($client->arecv_sayHello("JERRY"));
 }
