@@ -81,7 +81,7 @@ workerman不能运行在Window平台
         string sayHello(string name);
     }  
     
-注意命名空间统一使用 Services.服务名
+注意:命名空间统一使用 `Services.服务名`
 
 ###编译接口文件
 `thrift -gen php:server HelloWorld.thrift`   
@@ -90,7 +90,7 @@ workerman不能运行在Window平台
 `cp ./gen-php/Services/HelloWorld /yourdir/workerman/applications/Thrift/Services/ -r`
 
 ###编写handler文件
-在/yourdir/workerman/applications/Thrift/Services/HelloWorld/目录下创建HelloWorldHandler.php
+在/yourdir/workerman/applications/Thrift/Services/HelloWorld/目录下创建HelloWorldHandler.php如下
 
 ```php
 <?php
@@ -106,7 +106,7 @@ class HelloWorldHandler implements HelloWorldIf {
 ```
 
 ###配置workerman  
-在yourdir/workerman/conf/conf.d/下创建HelloWorld.conf文件   
+在yourdir/workerman/conf/conf.d/下创建HelloWorld.conf文件如下   
 
     ;Thrift HelloWorld 服务
     ;监听的端口,每个服务设置成一个单独的端口
@@ -127,7 +127,7 @@ class HelloWorldHandler implements HelloWorldIf {
     thrift_protocol  = TBinaryProtocol
 
 注意：
- * 配置文件命名规则为 服务名.conf。
+ * 配置文件命名规则为 `服务名.conf`。
  * 以后每增加一个服务只需要在config/conf/conf.d/下 `cp HelloWorld.conf 新服务名.conf`，并且更改listen项的端口即可 
  
 
@@ -204,6 +204,7 @@ workerman-Thrift及客户端目录结构
 =============================
 
 ###客户端放在了workerman/applications/Thrift/Clients目录下
+###在workerman里面客户端和服务端共用了Lib 和 Services 目录，单独使用客户端时，如果客户端没有这两个目录，需要从workerman上将这两个目录拷贝过去
 
     workerman/applications/Thrift + 
                                   |- Clients +
