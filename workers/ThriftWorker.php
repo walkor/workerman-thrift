@@ -65,6 +65,14 @@ class ThriftWorker extends Man\Core\SocketWorker
             }
         } 
         
+        $type_file = THRIFT_ROOT . '/Services/'.$this->workerName.'/Types.php';
+        if(!is_file($type_file))
+        {
+            $this->notice("File $type_file not exsits" );
+            return;
+        }
+        require_once $type_file;
+        
         //检查 processor 文件是否存在
         $processor_file = THRIFT_ROOT . '/Services/'.$this->workerName.'/'.$this->workerName.'.php';
         $processor_class_name = "\\Services\\".$this->workerName."\\".$this->workerName.'Processor';

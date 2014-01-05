@@ -331,10 +331,12 @@ class ThriftInstance
         // 客户端类名称
         $class_name = "\\Services\\" . $this->serviceName . "\\" . $this->serviceName . "Client";
         $client_file = THRIFT_CLIENT . '/../Services/'. $this->serviceName . '/' . $this->serviceName . '.php';
+        $type_file = THRIFT_CLIENT . '/../Services/'. $this->serviceName . '/Types.php';
         if(!class_exists($class_name) && !is_file($client_file))
         {
             throw new \Exception("File $client_file not exsits");
         }
+        require_once $type_file;
         require_once $client_file;
         
         // 初始化一个实例
