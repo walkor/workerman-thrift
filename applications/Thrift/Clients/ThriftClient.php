@@ -1,11 +1,12 @@
 <?php
+namespace ThriftClient;
 
 define('THRIFT_CLIENT', realpath(__DIR__ ) );
 
 require_once THRIFT_CLIENT . '/../Lib/Thrift/ClassLoader/ThriftClassLoader.php';
 require_once THRIFT_CLIENT . '/AddressManager.php';
 
-$loader = new Thrift\ClassLoader\ThriftClassLoader();
+$loader = new \Thrift\ClassLoader\ThriftClassLoader();
 $loader->registerNamespace('Thrift', THRIFT_CLIENT. '/../Lib');
 $loader->register();
 
@@ -109,7 +110,7 @@ class ThriftClient
             {
                 $address_map[$key] = $item['addresses'];
             }
-            ThriftClient\AddressManager::config($address_map);
+            AddressManager::config($address_map);
         }
         return self::$config;
     }
@@ -153,7 +154,7 @@ class ThriftClient
         {
             $protocol = $config[$service_name]['thrift_protocol'];
         }
-        return "Thrift\\Protocol\\".$protocol;
+        return "\\Thrift\\Protocol\\".$protocol;
     }
     
     /**
@@ -169,7 +170,7 @@ class ThriftClient
         {
             $transport = $config[$service_name]['thrift_transport'];
         }
-        return "Thrift\\Transport\\".$transport;
+        return "\\Thrift\\Transport\\".$transport;
     }
 }
 
@@ -241,7 +242,6 @@ class ThriftInstance
             // 判断是否已经有这个方法的异步发送请求
             if(isset($this->thriftAsyncInstances[$method_name_key]))
             {
-                $this->mnlog($this->serviceName, $method_name, 1, microtime(true)-$time_start, 0, 1500);
                 throw new \Exception($this->serviceName."->$method_name(".implode(',',$arguments).") already has been called, you can't call again before you call ".self::ASYNC_RECV_PREFIX.$real_method_name, 500);
             }
            
@@ -307,11 +307,11 @@ class ThriftInstance
     protected function __instance()
     {
         // 获取一个服务端节点地址
-        $address = ThriftClient\AddressManager::getOneAddress($this->serviceName);
+        $address = AddressManager::getOneAddress($this->serviceName);
         list($ip, $port) = explode(':', $address);
         
         // Transport
-        $socket = new Thrift\Transport\TSocket($ip, $port);
+        $socket = new \Thrift\Transport\TSocket($ip, $port);
         $transport_name = ThriftClient::getTransport($this->serviceName);
         $transport = new $transport_name($socket);
         // Protocol
@@ -324,12 +324,12 @@ class ThriftInstance
         catch(\Exception $e)
         {
             // 无法连上，则踢掉这个地址
-            ThriftClient::kickAddress($address);
+            AddressManager::kickAddress($address);
             throw $e;
         }
 
         // 客户端类名称
-        $class_name = "Services\\" . $this->serviceName . "\\" . $this->serviceName . "Client";
+        $class_name = "\\Services\\" . $this->serviceName . "\\" . $this->serviceName . "Client";
         $client_file = THRIFT_CLIENT . '/../Services/'. $this->serviceName . '/' . $this->serviceName . '.php';
         if(!class_exists($class_name) && !is_file($client_file))
         {
@@ -350,7 +350,7 @@ if(false)
                          'HelloWorld' => array(
                              'addresses' => array(
                                    '127.0.0.1:9090',
-                                   '127.0.0.2:9090',
+                                   '127.0.0.2:9191',
                                ),
                                'thrift_protocol' => 'TBinaryProtocol',
                                'thrift_transport' => 'TBufferedTransport',
@@ -365,7 +365,7 @@ if(false)
     $client = ThriftClient::instance('HelloWorld');
     
     // 同步
-    echo "async send and recv sayHello(\"TOM\")\n";
+    echo "sync send and recv sayHello(\"TOM\")\n";
     var_export($client->sayHello("TOM"));
     
     // 异步
