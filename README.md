@@ -87,10 +87,10 @@ workerman不能运行在Window平台
 `thrift -gen php:server HelloWorld.thrift`   
 
 ###拷贝编译好的文件到workerman下的目录
-`cp ./gen-php/Services/HelloWorld /yourdir/workerman/applications/Thrift/Services/ -r`
+`cp ./gen-php/Services/HelloWorld /yourdir/workerman/applications/ThriftRpc/Services/ -r`
 
 ###编写handler文件
-在/yourdir/workerman/applications/Thrift/Services/HelloWorld/目录下创建HelloWorldHandler.php如下
+在/yourdir/workerman/applications/ThriftRpc/Services/HelloWorld/目录下创建HelloWorldHandler.php如下
 
 ```php
 <?php
@@ -155,7 +155,7 @@ workerman-Thrift客户端使用示例
 <?php
     
     // 引入客户端文件
-    require_once 'yourdir/workerman/applications/Thrift/Clients/ThriftClient.php';
+    require_once 'yourdir/workerman/applications/ThriftRpc/Clients/ThriftClient.php';
     use ThriftClient;
     
     // 传入配置，一般在某统一入口文件中调用一次该配置接口即可
@@ -203,10 +203,10 @@ workerman-Thrift客户端使用示例
 workerman-Thrift及客户端目录结构
 =============================
 
-###客户端放在了workerman/applications/Thrift/Clients目录下
+###客户端放在了workerman/applications/ThriftRpc/Clients目录下
 ###在workerman里面客户端和服务端共用了Lib 和 Services 目录，单独使用客户端时，如果客户端没有这两个目录，需要从workerman上将这两个目录拷贝过去
 
-    workerman/applications/Thrift + 
+    workerman/applications/ThriftRpc + 
                                   |- Clients +
                                   |          |- ThriftClient.php    // workerman-thrift客户端主文件
                                   |          |- AddressManager.php  // 带故障节点踢出功能的地址管理器

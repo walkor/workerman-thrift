@@ -1,7 +1,7 @@
 <?php
 require_once WORKERMAN_ROOT_DIR . 'man/Core/SocketWorker.php';
 
-define('THRIFT_ROOT', realpath(__DIR__. '/../applications/Thrift'));
+define('THRIFT_ROOT', realpath(__DIR__. '/../applications/ThriftRpc'));
 require_once THRIFT_ROOT . '/Lib/Thrift/ClassLoader/ThriftClassLoader.php';
 
 use Thrift\ClassLoader\ThriftClassLoader;
@@ -63,47 +63,27 @@ class ThriftWorker extends Man\Core\SocketWorker
                 $this->notice('Class ' . $this->thriftTransport . ' not exsits , Please check ./conf/conf.d/'.$this->workerName.'.conf');
                 return;
             }
-        } 
-        
-        $type_file = THRIFT_ROOT . '/Services/'.$this->workerName.'/Types.php';
-        if(!is_file($type_file))
-        {
-            $this->notice("File $type_file not exsits" );
-            return;
         }
-        require_once $type_file;
         
-        //检查 processor 文件是否存在
-        $processor_file = THRIFT_ROOT . '/Services/'.$this->workerName.'/'.$this->workerName.'.php';
-        $processor_class_name = "\\Services\\".$this->workerName."\\".$this->workerName.'Processor';
-        if(!is_file($processor_file))
-        {
-            $this->notice("File $processor_file not exsits and can't find class $processor_class_name" );
-            return;
-        }
-        require_once $processor_file;
+         // 载入该服务下的所有文件
+         foreach(glob(THRIFT_ROOT . '/Services/'.$this->workerName.'/*.php') as $php_file)
+         {
+             require_once $php_file;
+         }
         
         // 检查类是否存在
+        $processor_class_name = "\\Services\\".$this->workerName."\\".$this->workerName.'Processor';
         if(!class_exists($processor_class_name))
         {
             $this->notice("Class $processor_class_name not found" );
             return;
         }
         
-        //检查 handler 文件是否存在
-        $handler_file = THRIFT_ROOT . '/Services/'.$this->workerName.'/'.$this->workerName.'Handler.php';
-        $handler_class_name ="\\Services\\".$this->workerName."\\".$this->workerName.'Handler';
-        if(!is_file($handler_file))
-        {
-            $this->notice("Class $handler_class_name not found" );
-            return;
-        }
-        require_once $handler_file;
-        
         // 检查类是否存在
+        $handler_class_name ="\\Services\\".$this->workerName."\\".$this->workerName.'Handler';
         if(!class_exists($handler_class_name))
         {
-            $this->notice("File $handler_file not exsits and can't find class $handler_class_name" );
+            $this->notice("Class $handler_class_name not found" );
             return;
         }
         

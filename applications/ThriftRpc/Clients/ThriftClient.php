@@ -17,35 +17,49 @@ $loader->register();
  * <b>使用示例:</b>
  * <pre>
  * <code>
- * ThriftClient::config(array(  
- *                         'HelloWorld' => array(
- *                             'addresses' => array(
- *                                   '127.0.0.1:9090',
- *                                   '127.0.0.2:9090',
- *                               ),
- *                               'thrift_protocol' => 'TBinaryProtocol',
- *                               'thrift_transport' => 'TBufferedTransport',
- *                           ),
- *                           'UserInfo' => array(
- *                               'addresses' => array(
- *                                   '127.0.0.1:9090'
- *                               ),
- *                           ),
- *                     )
- * );
- * 
- * // 同步调用
- * $hello_world_client = ThriftClient::instance('HelloWorld');
- * $ret = $hello_world_client->sayHello("TOM"));
- * 
- * // ===以下是异步调用===
- * // 异步调用之发送请求给服务器。提示：在方法前面加上asend_前缀即为异步发送请求
- * $hello_world_client->asend_sayHello("TOM");
- * 
- * .................这里是你的其它业务逻辑...............
- * 
- * // 异步调用之获取服务器返回。提示：在方法前面加上arecv_前缀即为异步接收服务器返回
- * $ret_async = arecv_sayHello("TOM");
+ // 引入客户端文件
+    require_once 'yourdir/workerman/applications/ThriftRpc/Clients/ThriftClient.php';
+    use ThriftClient;
+    
+    // 传入配置，一般在某统一入口文件中调用一次该配置接口即可
+    ThriftClient::config(array(
+                         'HelloWorld' => array(
+                           'addresses' => array(
+                               '127.0.0.1:9090',
+                               '127.0.0.2:9191',
+                             ),
+                             'thrift_protocol' => 'TBinaryProtocol',//不配置默认是TBinaryProtocol，对应服务端HelloWorld.conf配置中的thrift_protocol
+                             'thrift_transport' => 'TBufferedTransport',//不配置默认是TBufferedTransport，对应服务端HelloWorld.conf配置中的thrift_transport
+                           ),
+                           'UserInfo' => array(
+                             'addresses' => array(
+                               '127.0.0.1:9393'
+                             ),
+                           ),
+                         )
+                       );
+    // =========  以上在WEB入口文件中调用一次即可  ===========
+    
+    
+    // =========  以下是开发过程中的调用示例  ==========
+    
+    // 初始化一个HelloWorld的实例
+    $client = ThriftClient::instance('HelloWorld');
+    
+    // --------同步调用实例----------
+    var_export($client->sayHello("TOM"));
+    
+    // --------异步调用示例-----------
+    // 异步调用 之 发送请求给服务端（注意：异步发送请求格式统一为 asend_XXX($arg),既在原有方法名前面增加'asend_'前缀）
+    $client->asend_sayHello("JERRY");
+    $client->asend_sayHello("KID");
+    
+    // 这里是其它业务逻辑
+    sleep(1);
+    
+    // 异步调用 之 接收服务端的回应（注意：异步接收请求格式统一为 arecv_XXX($arg),既在原有方法名前面增加'arecv_'前缀）
+    var_export($client->arecv_sayHello("KID"));
+    var_export($client->arecv_sayHello("JERRY"));
  * 
  * <code>
  * </pre>
@@ -328,16 +342,18 @@ class ThriftInstance
             throw $e;
         }
 
+        // 载入该服务下的所有文件
+        foreach(glob(THRIFT_CLIENT . '/../Services/'.$this->serviceName.'/*.php') as $php_file)
+        {
+            require_once $php_file;
+        }
+        
         // 客户端类名称
         $class_name = "\\Services\\" . $this->serviceName . "\\" . $this->serviceName . "Client";
-        $client_file = THRIFT_CLIENT . '/../Services/'. $this->serviceName . '/' . $this->serviceName . '.php';
-        $type_file = THRIFT_CLIENT . '/../Services/'. $this->serviceName . '/Types.php';
-        if(!class_exists($class_name) && !is_file($client_file))
+        if(!class_exists($class_name))
         {
-            throw new \Exception("File $client_file not exsits");
+            throw new \Exception("Class $class_name not found");
         }
-        require_once $type_file;
-        require_once $client_file;
         
         // 初始化一个实例
         return new $class_name($protocol);
