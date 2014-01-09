@@ -157,7 +157,7 @@ class ThriftClient
     
     /**
      * getProtocol
-     * @param string $key
+     * @param string $service_name
      * @return string
      */
     public static function getProtocol($service_name)
@@ -173,7 +173,7 @@ class ThriftClient
     
     /**
      * getTransport
-     * @param string $key
+     * @param string $service_name
      * @return string
      */
     public static function getTransport($service_name)
@@ -185,6 +185,25 @@ class ThriftClient
             $transport = $config[$service_name]['thrift_transport'];
         }
         return "\\Thrift\\Transport\\".$transport;
+    }
+    
+    /**
+     * 获得服务目录，用来查找thrift生成的客户端文件
+     * @param string $service_name
+     * @return string
+     */
+    public static function getServiceDir($service_name)
+    {
+        $config = self::config();
+        if(!empty($config[$service_name]['service_dir']))
+        {
+            $service_dir = $config[$service_name]['service_dir']."/$service_name";
+        }
+        else
+        {
+            $service_dir = THRIFT_CLIENT . "/../Services/$service_name";
+        }
+        return $service_dir;
     }
 }
 
@@ -256,18 +275,21 @@ class ThriftInstance
             // 判断是否已经有这个方法的异步发送请求
             if(isset($this->thriftAsyncInstances[$method_name_key]))
             {
+                // 删除实例，避免在daemon环境下一直出错
+                unset($this->thriftAsyncInstances[$method_name_key]);
                 throw new \Exception($this->serviceName."->$method_name(".implode(',',$arguments).") already has been called, you can't call again before you call ".self::ASYNC_RECV_PREFIX.$real_method_name, 500);
             }
            
             // 创建实例发送请求
-            $this->thriftAsyncInstances[$method_name_key] = $this->__instance();
-            $callback = array($this->thriftAsyncInstances[$method_name_key], 'send_'.$real_method_name);
+            $instance = $this->__instance();
+            $callback = array($instance, 'send_'.$real_method_name);
             if(!is_callable($callback))
             {
-                throw new \Exception($this->serviceName.'->'.$method_name. ' not callable', 1400);
+                throw new \Exception($this->serviceName.'->'.$method_name. ' not callable', 400);
             }
             $ret = call_user_func_array($callback, $arguments);
-            
+            // 保存客户单实例
+            $this->thriftAsyncInstances[$method_name_key] = $instance;
             return $ret;
         }
         // 异步接收
@@ -280,26 +302,27 @@ class ThriftInstance
             // 判断是否有发送过这个方法的异步请求
             if(!isset($this->thriftAsyncInstances[$method_name_key]))
             {
-                throw new \Exception($this->serviceName."->$send_method_name(".implode(',',$arguments).") have not previously been called", 1500);
+                throw new \Exception($this->serviceName."->$send_method_name(".implode(',',$arguments).") have not previously been called", 500);
             }
             
-            $callback = array($this->thriftAsyncInstances[$method_name_key], 'recv_'.$real_method_name);
+            $instance = $this->thriftAsyncInstances[$method_name_key];
+            // 先删除客户端实例
+            unset($this->thriftAsyncInstances[$method_name_key]);
+            $callback = array($instance, 'recv_'.$real_method_name);
             if(!is_callable($callback))
             {
-                throw new \Exception($this->serviceName.'->'.$method_name. ' not callable', 1400);
+                throw new \Exception($this->serviceName.'->'.$method_name. ' not callable', 400);
             }
             // 接收请求
             $ret = call_user_func_array($callback, array());
-                
-            // 删除实例
-            $this->thriftAsyncInstances[$method_name_key] = null;
-            unset($this->thriftAsyncInstances[$method_name_key]);
+             
             return $ret;
         }
         
+        // 同步调用
         $success = true;
-        // 同步发送接收
-        if(empty($this->thriftInstance))
+        // 如果没有thrift实例，或者是运行在命令行模式下，则重新创建一个实例
+        if(empty($this->thriftInstance) || PHP_SAPI == 'cli')
         {
             $this->thriftInstance = $this->__instance();
         }
@@ -308,6 +331,7 @@ class ThriftInstance
         {
             throw new \Exception($this->serviceName.'->'.$method_name. ' not callable', 1400);
         }
+        // 调用客户端方法
         $ret = call_user_func_array($callback, $arguments);
         
         return $ret;
@@ -342,27 +366,42 @@ class ThriftInstance
             throw $e;
         }
 
-        // 载入该服务下的所有文件
-        foreach(glob(THRIFT_CLIENT . '/../Services/'.$this->serviceName.'/*.php') as $php_file)
-        {
-            require_once $php_file;
-        }
-        
         // 客户端类名称
         $class_name = "\\Services\\" . $this->serviceName . "\\" . $this->serviceName . "Client";
+        // 类不存在则尝试加载
         if(!class_exists($class_name))
         {
-            throw new \Exception("Class $class_name not found");
+            $service_dir = $this->includeFile();
+            if(!class_exists($class_name))
+            {
+                throw new \Exception("Class $class_name not found in directory $service_dir");
+            }
         }
         
         // 初始化一个实例
         return new $class_name($protocol);
     }
+    
+    /**
+     * 载入thrift生成的客户端文件
+     * @throws \Exception
+     * @return void
+     */
+    protected function includeFile()
+    {
+        // 载入该服务下的所有文件
+        $service_dir = ThriftClient::getServiceDir($this->serviceName);
+        foreach(glob($service_dir.'/*.php') as $php_file)
+        {
+            require_once $php_file;
+        }
+        return $service_dir;
+    }
 }
 
 
 /***********以下是测试代码***********/
-if(false)
+if(PHP_SAPI == 'cli' && isset($argv[0]) && $argv[0] == basename(__FILE__))
 {
     ThriftClient::config(array(
                          'HelloWorld' => array(
@@ -370,8 +409,9 @@ if(false)
                                    '127.0.0.1:9090',
                                    '127.0.0.2:9191',
                                ),
-                               'thrift_protocol' => 'TBinaryProtocol',
-                               'thrift_transport' => 'TBufferedTransport',
+                               'thrift_protocol'  => 'TBinaryProtocol',        // 不设置默认为TBinaryProtocol
+                               'thrift_transport' => 'TBufferedTransport',  // 不设置默认为TBufferedTransport
+                               'service_dir'         => __DIR__.'/../Services/'   // 不设置默认是__DIR__.'/../Services/',即上一级目录下的Services目录
                            ),
                            'UserInfo' => array(
                                'addresses' => array(
@@ -398,4 +438,5 @@ if(false)
     echo "\nasync recv response arecv_sayHello(\"KID\") arecv_sayHello(\"JERRY\")\n";
     var_export($client->arecv_sayHello("KID"));
     var_export($client->arecv_sayHello("JERRY"));
+    echo "\n";
 }
