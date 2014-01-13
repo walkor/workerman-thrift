@@ -321,11 +321,9 @@ class ThriftInstance
         
         // 同步调用
         $success = true;
-        // 如果没有thrift实例，或者是运行在命令行模式下，则重新创建一个实例
-        if(empty($this->thriftInstance) || PHP_SAPI == 'cli')
-        {
-            $this->thriftInstance = $this->__instance();
-        }
+        // 每次都重新创建一个实例
+        $this->thriftInstance = $this->__instance();
+        
         $callback = array($this->thriftInstance, $method_name);
         if(!is_callable($callback))
         {
@@ -333,6 +331,8 @@ class ThriftInstance
         }
         // 调用客户端方法
         $ret = call_user_func_array($callback, $arguments);
+        // 每次都销毁实例
+        $this->thriftInstance = null;
         
         return $ret;
     }

@@ -111,8 +111,8 @@ class HelloWorldHandler implements HelloWorldIf {
     ;Thrift HelloWorld 服务
     ;监听的端口,每个服务设置成一个单独的端口
     listen = tcp://0.0.0.0:9090
-    ;长连接，服务端不主动断开，这里固定设置成1
-    persistent_connection = 1
+    ;短连接，每次请求后服务端主动断开
+    persistent_connection = 0
     ;启动多少worker进程,一般设置成 cpu核数*3
     start_workers=72
     ;接收多少请求后退出
@@ -156,7 +156,7 @@ workerman-Thrift客户端使用示例
     
     // 引入客户端文件
     require_once 'yourdir/workerman/applications/ThriftRpc/Clients/ThriftClient.php';
-    use ThriftClient;
+    use ThriftClient\ThriftClient;
     
     // 传入配置，一般在某统一入口文件中调用一次该配置接口即可
     ThriftClient::config(array(
