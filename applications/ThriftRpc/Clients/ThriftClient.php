@@ -407,7 +407,7 @@ if(PHP_SAPI == 'cli' && isset($argv[0]) && $argv[0] == basename(__FILE__))
                          'HelloWorld' => array(
                              'addresses' => array(
                                    '127.0.0.1:9090',
-                                   '127.0.0.2:9191',
+                                   //'127.0.0.2:9191', //设置的一个故障地址，用来测试客户端故障节点踢出功能
                                ),
                                'thrift_protocol'  => 'TBinaryProtocol',        // 不设置默认为TBinaryProtocol
                                'thrift_transport' => 'TBufferedTransport',  // 不设置默认为TBufferedTransport
