@@ -265,7 +265,7 @@ class TSocket extends TTransport {
       if ($data === false) {
           throw new TTransportException('TSocket: Could not read '.$len.' bytes from '.
                                $this->host_.':'.$this->port_);
-      } elseif($data == '' && feof($this->handle_)) {
+      } elseif($data == '' &&  '' == ($data = fread($this->handle_, $len)) && feof($this->handle_)) {
           throw new TTransportException('TSocket read 0 bytes');
         }
 

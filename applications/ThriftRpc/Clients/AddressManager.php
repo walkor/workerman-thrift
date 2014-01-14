@@ -52,10 +52,16 @@ class AddressManager
     private static $badAddressList = null;
     
     /**
+     * 信号量的fd
+     * @var resource
+     */
+    private static $semFd = null;
+    
+    /**
      * 是否支持共享内存
      * @var bool
      */
-    protected static $shmEnable = false;
+    protected static $shmEnable = true;
     
     /**
      * 设置/获取 配置
@@ -78,12 +84,16 @@ class AddressManager
         {
             // 初始化配置
             self::$config = $config;
-            if(extension_loaded('sysvshm'))
+            if(self::$shmEnable && extension_loaded('sysvshm') && extension_loaded('sysvsem'))
             {
-                self::$shmEnable = true;
                 // 检查现在配置md5与共享内存中md5是否匹配，用来判断配置是否有更新
                 self::checkConfigMd5();
             }
+            else if(self::$shmEnable)
+            {
+                self::$shmEnable = false;
+            }
+                
             // 从共享内存中获得故障节点列表
             self::getBadAddressList();
         }
@@ -109,15 +119,16 @@ class AddressManager
     
         // 获取故障节点列表
         $bad_address_list = self::getBadAddressList();
-        
         if($bad_address_list)
         {
-            // 有一定几率使用故障节点
+            // 获得可用节点
+            $address_list = array_diff($address_list, $bad_address_list);
+            // 有一定几率使用故障节点,或者全部故障了，则随机选择一个故障节点
             $base_num = 1000000;
-            if(rand(0, $base_num)/$base_num <= self::DETECT_RATE)
+            if(rand(0, $base_num)/$base_num <= self::DETECT_RATE || (empty($address_list)))
             {
                 // 故障的节点
-                $address_list_bad = array_intersect($bad_address_list, $address_list);
+                $address_list_bad = array_intersect($bad_address_list, self::$config[$key]);
                 if($address_list_bad)
                 {
                     // 命中几率，获取到一个故障地址
@@ -128,17 +139,12 @@ class AddressManager
                     return $address;
                 }
             }
-            else
-            {
-                // 从节点列表中去掉故障节点列表
-                $address_list = array_diff($address_list, $bad_address_list);
-            }
         }
         
         // 如果没有可用的节点
         if (empty($address_list))
         {
-            throw new \Exception("No avaliable server node! service_name:$key allAddress:[".implode(',', self::$config[$key]['nodes']).'] badAddress:[' . implode(',', $bad_address_list).']');
+            throw new \Exception("No avaliable server node! service_name:$key allAddress:[".implode(',', self::$config[$key]).'] badAddress:[' . implode(',', $bad_address_list).']');
         }
     
         // 随机选择一个节点
@@ -156,6 +162,19 @@ class AddressManager
             self::$badAddressShmFd = shm_attach(self::BAD_ASSRESS_LIST_SHM_KEY);
         }
         return self::$badAddressShmFd;
+    }
+    
+    /**
+     * 获取信号量fd
+     * @return resource
+     */
+    public static function getSemFd()
+    {
+        if(!self::$semFd && self::$shmEnable)
+        {
+            self::$semFd = sem_get(self::BAD_ASSRESS_LIST_SHM_KEY);
+        }
+        return self::$semFd;
     }
     
     /**
@@ -179,7 +198,7 @@ class AddressManager
         }
         
         // 尝试读取md5，可能其它进程已经写入了
-        $config_md5 = @shm_get_var(self::$badAddressShmFd, self::SHM_CONFIG_MD5);
+        $config_md5 = @shm_get_var(self::getShmFd(), self::SHM_CONFIG_MD5);
         $config_md5_now = md5(serialize(self::$config));
         
         // 有md5值，则判断是否与当前md5值相等
@@ -191,10 +210,16 @@ class AddressManager
         self::$badAddressList = array();
         
         // 清空badAddressList
-        if(shm_put_var(self::$badAddressShmFd, self::SHM_BAD_ADDRESS_KEY, array()))
+        self::getMutex();
+        $ret = shm_put_var(self::getShmFd(), self::SHM_BAD_ADDRESS_KEY, array());
+        self::releaseMutex();
+        if($ret)
         {
             // 写入md5值
-            return shm_put_var(self::$badAddressShmFd, self::SHM_CONFIG_MD5, $config_md5_now);
+            self::getMutex();
+            $ret = shm_put_var(self::getShmFd(), self::SHM_CONFIG_MD5, $config_md5_now);
+            self::releaseMutex();
+            return $ret;
         }
         return false;
     }
@@ -209,16 +234,23 @@ class AddressManager
         if(null === self::$badAddressList || !$use_cache)
         {
             $bad_address_list = array();
-            if(self::$shmEnable)
+            if(self::$shmEnable && shm_has_var(self::getShmFd(), self::SHM_BAD_ADDRESS_KEY))
             {
                 // 获取故障节点
                 $bad_address_list = shm_get_var(self::getShmFd(), self::SHM_BAD_ADDRESS_KEY);
-            }
-            if(false === $bad_address_list || !is_array($bad_address_list))
-            {
-                // 初始化badAddressList共享内存
-                shm_put_var(self::$badAddressShmFd, array());
-                self::$badAddressList = array();
+                if(!is_array($bad_address_list))
+                {
+                    // 可能是共享内寻写怀了，重新清空
+                    self::getMutex();
+                    shm_remove(self::getShmFd());
+                    self::releaseMutex();
+                    self::$badAddressShmFd = null;
+                    self::$badAddressList = array();
+                }
+                else
+                {
+                    self::$badAddressList = $bad_address_list;
+                }
             }
             else
             {
@@ -243,7 +275,10 @@ class AddressManager
         $bad_address_list[] = $address;
         $bad_address_list = array_unique($bad_address_list);
         self::$badAddressList = $bad_address_list;
-        return shm_put_var(self::getShmFd(), self::SHM_BAD_ADDRESS_KEY, $bad_address_list);
+        self::getMutex();
+        $ret = shm_put_var(self::getShmFd(), self::SHM_BAD_ADDRESS_KEY, $bad_address_list);
+        self::releaseMutex();
+        return $ret;
     }
     
     /**
@@ -267,13 +302,36 @@ class AddressManager
         unset($bad_address_list_flip[$address]);
         $bad_address_list = array_keys($bad_address_list_flip);
         self::$badAddressList = $bad_address_list;
-        return shm_put_var(self::getShmFd(), self::SHM_BAD_ADDRESS_KEY, $bad_address_list);
+        self::getMutex();
+        $ret = shm_put_var(self::getShmFd(), self::SHM_BAD_ADDRESS_KEY, $bad_address_list);
+        self::releaseMutex();
+        return $ret;
+    }
+    
+    /**
+     * 获取锁(睡眠锁)
+     * @return bool
+     */
+    public static function getMutex()
+    {
+        ($fd = self::getSemFd()) && sem_acquire($fd);
+        return true;
+    }
+    
+    /**
+     * 释放锁
+     * @return bool
+     */
+    public static function releaseMutex()
+    {
+        ($fd = self::getSemFd()) && sem_release($fd);
+        return true;
     }
     
 }
 
 // ================ 以下是测试代码 ======================
-if(false)
+if(PHP_SAPI == 'cli' && isset($argv[0]) && $argv[0] == basename(__FILE__))
 {
     AddressManager::config(array(  
                                'HelloWorld' => array(

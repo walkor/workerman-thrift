@@ -102,6 +102,7 @@ class ThriftWorker extends Man\Core\SocketWorker
         $this->currentDealFd = (int)$connection;
         if(feof($connection))
         {
+            $this->statusInfo['client_close']++;
             return $this->closeClient($this->currentDealFd);
         }
         $socket = new Thrift\Transport\TSocket();
