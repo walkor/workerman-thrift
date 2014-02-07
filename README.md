@@ -223,3 +223,30 @@ workerman-Thrift及客户端目录结构
                                               .           .
                                               .           .
                                               .           .
+                                              
+性能测试
+===============
+
+###环境
+```
+系统：Debian GNU/Linux 6.0
+cpu ：Intel(R) Xeon(R) CPU E5-2420 0 @ 1.90GHz * 24
+内存：64G
+
+WorkerMan：开启24个Worker进程处理业务请求
+压测软件：loadrunner
+```
+
+###业务逻辑
+`HelloWorld sayHello`
+
+###结果
+```
+吞吐量：平均8200/S
+内存占用：24*12M=288M
+cpu平均使用率：55%
+load：16
+流量：15M/S
+
+处理曲线平稳，无内存泄漏，无流量抖动
+```
