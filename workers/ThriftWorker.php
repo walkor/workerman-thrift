@@ -39,6 +39,12 @@ class ThriftWorker extends Man\Core\SocketWorker
     protected $thriftTransport = "\\Thrift\\Transport\\TBufferedTransport";
     
     /**
+     * 统计数据上报的地址
+     * @var string
+     */
+    protected $statisticAddress = 'udp://127.0.0.1:44646';
+    
+    /**
      * 进程启动时做的一些初始化工作
      * @see Man\Core.SocketWorker::onStart()
      * @return void
@@ -88,6 +94,13 @@ class ThriftWorker extends Man\Core\SocketWorker
             return;
         }
         
+        // 统计上报地址
+        $statistic_address = \Man\Core\Lib\Config::get($this->workerName.'.statistic_address');
+        if($statistic_address)
+        {
+            $this->statisticAddress = $statistic_address;
+        }
+        
         $handler = new $handler_class_name();
         $this->processor = new $processor_class_name($handler);
     }
@@ -117,11 +130,11 @@ class ThriftWorker extends Man\Core\SocketWorker
             \Thrift\Statistics\StatisticClient::tick();
             // 业务处理
             $this->processor->process($protocol, $protocol);
-            \Thrift\Statistics\StatisticClient::report($this->workerName, $protocol->fname, 1, 0, '');
+            \Thrift\Statistics\StatisticClient::report($this->workerName, $protocol->fname, 1, 0, '', $this->statisticAddress);
         }
         catch(\Exception $e)
         {
-            \Thrift\Statistics\StatisticClient::report($this->workerName, $protocol->fname, 0, $e->getCode(), $e);
+            \Thrift\Statistics\StatisticClient::report($this->workerName, $protocol->fname, 0, $e->getCode(), $e, $this->statisticAddress);
             $this->notice('CODE:' . $e->getCode() . ' MESSAGE:' . $e->getMessage()."\n".$e->getTraceAsString()."\nCLIENT_IP:".$this->getRemoteIp()."\nBUFFER:[".var_export($this->recvBuffers[$fd]['buf'],true)."]\n");
             $this->statusInfo['throw_exception'] ++;
             $this->sendToClient($e->getMessage());
