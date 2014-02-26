@@ -1,4 +1,5 @@
 <?php
+namespace Thrift\Statistics;
 /**
  * 统计客户端
  * @author workerman.net

@@ -389,6 +389,7 @@ class TCompactProtocol extends TProtocol {
     }
     $result += $this->readVarint($seqId);
     $name += $this->readString($name);
+    $this->fname = $name;
 
     return $result;
   }

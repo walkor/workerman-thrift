@@ -36,6 +36,12 @@ abstract class TProtocol {
    * @var TTransport
    */
   protected $trans_;
+  
+  /**
+   * last fname
+   * @var string
+   */
+  public $fname = '';
 
   /**
    * Constructor

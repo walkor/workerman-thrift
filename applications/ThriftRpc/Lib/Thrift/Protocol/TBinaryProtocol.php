@@ -216,6 +216,7 @@ class TBinaryProtocol extends TProtocol {
           $this->readI32($seqid);
       }
     }
+    $this->fname = $name;
     return $result;
   }
 

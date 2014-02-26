@@ -581,6 +581,8 @@ class TJSONProtocol extends TProtocol
         $name = $this->readJSONString(false);
         $type = $this->readJSONInteger();
         $seqid = $this->readJSONInteger();
+        
+        $this->fname = $name;
 
         return true;
     }

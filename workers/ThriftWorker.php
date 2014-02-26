@@ -3,6 +3,7 @@ require_once WORKERMAN_ROOT_DIR . 'man/Core/SocketWorker.php';
 
 define('THRIFT_ROOT', realpath(__DIR__. '/../applications/ThriftRpc'));
 require_once THRIFT_ROOT . '/Lib/Thrift/ClassLoader/ThriftClassLoader.php';
+require_once THRIFT_ROOT . '/Lib/Statistics/StatisticClient.php';
 
 use Thrift\ClassLoader\ThriftClassLoader;
 
@@ -112,11 +113,15 @@ class ThriftWorker extends Man\Core\SocketWorker
         
         // 执行处理
         try{
+            // 统计开始时间
+            \Thrift\Statistics\StatisticClient::tick();
             // 业务处理
             $this->processor->process($protocol, $protocol);
+            \Thrift\Statistics\StatisticClient::report($this->workerName, $protocol->fname, 1, 0, '');
         }
         catch(\Exception $e)
         {
+            \Thrift\Statistics\StatisticClient::report($this->workerName, $protocol->fname, 0, $e->getCode(), $e);
             $this->notice('CODE:' . $e->getCode() . ' MESSAGE:' . $e->getMessage()."\n".$e->getTraceAsString()."\nCLIENT_IP:".$this->getRemoteIp()."\nBUFFER:[".var_export($this->recvBuffers[$fd]['buf'],true)."]\n");
             $this->statusInfo['throw_exception'] ++;
             $this->sendToClient($e->getMessage());
