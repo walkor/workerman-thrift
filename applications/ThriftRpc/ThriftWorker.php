@@ -1,5 +1,5 @@
 <?php
-define('THRIFT_ROOT', realpath(__DIR__. '/../applications/ThriftRpc'));
+define('THRIFT_ROOT', __DIR__);
 require_once THRIFT_ROOT . '/Lib/Thrift/ClassLoader/ThriftClassLoader.php';
 require_once THRIFT_ROOT . '/Lib/Statistics/StatisticClient.php';
 
