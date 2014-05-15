@@ -1,6 +1,4 @@
 <?php
-require_once WORKERMAN_ROOT_DIR . 'man/Core/SocketWorker.php';
-
 define('THRIFT_ROOT', realpath(__DIR__. '/../applications/ThriftRpc'));
 require_once THRIFT_ROOT . '/Lib/Thrift/ClassLoader/ThriftClassLoader.php';
 require_once THRIFT_ROOT . '/Lib/Statistics/StatisticClient.php';

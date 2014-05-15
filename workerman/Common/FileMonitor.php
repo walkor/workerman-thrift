@@ -1,5 +1,5 @@
 <?php 
-require_once WORKERMAN_ROOT_DIR . 'man/Core/SocketWorker.php';
+require_once WORKERMAN_ROOT_DIR . 'Core/SocketWorker.php';
 /**
  * 
  * 用这个worker监控文件更新
@@ -29,15 +29,18 @@ class FileMonitor extends Man\Core\AbstractWorker
      */
     public function start()
     {
-        if(\Man\Core\Lib\Config::get('workerman.debug') != 1)
-        {
-            return;
-        }
-        if(!\Man\Core\Master::getQueueId())
+        if(\Man\Core\Lib\Config::get('workerman.debug') != 1 || !\Man\Core\Master::getQueueId())
         {
             while(1)
             {
-                sleep(PHP_INT_MAX);
+                if(!$this->hasShutDown())
+                {
+                    sleep(PHP_INT_MAX);
+                }
+                else
+                {
+                    exit(0);
+                }
             }
         }
         $msg_type = $message = 0;
