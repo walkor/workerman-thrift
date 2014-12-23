@@ -108,12 +108,12 @@ class HelloWorldHandler implements HelloWorldIf {
 ```
 
 ###配置workerman  
-在yourdir/workerman/conf/conf.d/下创建HelloWorld.conf文件如下   
+在yourdir/applications/ThriftRpc/conf.d/下创建HelloWorld.conf文件如下   
 
   
     ;Thrift HelloWorld 服务
     ;worker_file，worker路口入口文件
-    worker_file = ../applications/ThriftRpc/ThriftWorker.php
+    worker_file = ../ThriftWorker.php
     ;监听的端口
     listen = tcp://0.0.0.0:9090
     ;短连接，每次请求后服务端主动断开
@@ -133,7 +133,7 @@ class HelloWorldHandler implements HelloWorldIf {
 
 注意：
  * 配置文件命名规则为 `服务名.conf`。
- * 以后每增加一个服务只需要在config/conf/conf.d/下 `cp HelloWorld.conf 新服务名.conf`，并且更改listen项的端口即可 
+ * 以后每增加一个服务只需要在applications/ThriftRpc/conf.d/下 `cp HelloWorld.conf 新服务名.conf`，并且更改listen项的端口即可 
  
 
 workerman-Thrift客户端的使用
