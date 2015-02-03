@@ -43,19 +43,19 @@ workerman不能运行在Window平台
 以ubuntu为例
 
 启动  
-`sudo ./bin/workermand start`
+`php start.php start -d`
 
 重启启动  
-`sudo ./bin/workermand restart`
+`php start.php restart`
 
 平滑重启/重新加载配置  
-`sudo ./bin/workermand reload`
+`php start.php reload`
 
 查看服务状态  
-`sudo ./bin/workermand status`
+`php start.php status`
 
 停止  
-`sudo ./bin/workermand stop`
+`php start.php stop`
 
 在WorkerMan上使用Thrift
 ============
@@ -92,7 +92,7 @@ workerman不能运行在Window平台
 `cp ./gen-php/Services/HelloWorld /yourdir/workerman/applications/ThriftRpc/Services/ -r`
 
 ###编写handler文件
-在/yourdir/workerman/applications/ThriftRpc/Services/HelloWorld/目录下创建HelloWorldHandler.php如下
+在Applications/ThriftRpc/Services/HelloWorld/目录下创建HelloWorldHandler.php如下
 
 ```php
 <?php
@@ -107,34 +107,24 @@ class HelloWorldHandler implements HelloWorldIf {
 }
 ```
 
-###配置workerman  
-在yourdir/applications/ThriftRpc/conf.d/下创建HelloWorld.conf文件如下   
+#### 初始化
+在Applications/ThriftRpc/start.php 中初始化服务，包括进端口和程数
+```php
+require_once __DIR__ . '/ThriftWorker.php';
 
-  
-    ;Thrift HelloWorld 服务
-    ;worker_file，worker路口入口文件
-    worker_file = ../ThriftWorker.php
-    ;监听的端口
-    listen = tcp://0.0.0.0:9090
-    ;短连接，每次请求后服务端主动断开
-    persistent_connection = 0
-    ;启动多少worker进程,一般设置成 cpu核数*8
-    start_workers=24
-    ;接收多少请求后退出
-    max_requests=10000
-    ;以哪个用户运行该worker进程,为了安全，请使用较低权限的用户,如www-data nobody
-    user=root
-    ;thrift transport，默认使用TBufferedTransport，可以改成其它transport（注意不要忘记修改客户端对应的thrift_transport配置项）
-    thrift_transport = TBufferedTransport
-    ;thrift protocol，默认使用二进制协议，可以设置成其它协议（注意不要忘记修改客户端对应的thrift_protocol配置项）
-    thrift_protocol  = TBinaryProtocol
-    ;统计数据上报地址，即StatisticWorker.conf配置的地址
-    statistic_address = udp://127.0.0.1:44646
+// helloworld
+$hello_worker = new ThriftWorker('tcp://0.0.0.0:9090');
+$hello_worker->count = 16;
+$hello_worker->class = 'HelloWorld';
 
-注意：
- * 配置文件命名规则为 `服务名.conf`。
- * 以后每增加一个服务只需要在applications/ThriftRpc/conf.d/下 `cp HelloWorld.conf 新服务名.conf`，并且更改listen项的端口即可 
- 
+// another worker
+//$another_worker = new ThriftWorker('tcp://0.0.0.0:9090');
+//$another_worker->count = 16;
+//$another_worker->class = 'AnotherClass';
+
+```
+
+
 
 workerman-Thrift客户端的使用
 ==========
