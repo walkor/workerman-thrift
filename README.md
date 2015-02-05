@@ -124,6 +124,12 @@ $hello_worker->class = 'HelloWorld';
 
 ```
 
+#### 运行
+进入workerman根目录运行
+```shell
+php start.php start -d
+```
+
 
 
 workerman-Thrift客户端的使用
