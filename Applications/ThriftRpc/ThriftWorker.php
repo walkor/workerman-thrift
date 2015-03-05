@@ -95,7 +95,7 @@ class ThriftWorker extends Worker
         $processor_class_name = "\\Services\\".$this->class."\\".$this->class.'Processor';
         if(!class_exists($processor_class_name))
         {
-            $this->notice("Class $processor_class_name not found" );
+            slef::log("Class $processor_class_name not found" );
             return;
         }
         
@@ -103,7 +103,7 @@ class ThriftWorker extends Worker
         $handler_class_name ="\\Services\\".$this->class."\\".$this->class.'Handler';
         if(!class_exists($handler_class_name))
         {
-            $this->notice("Class $handler_class_name not found" );
+            self::log("Class $handler_class_name not found" );
             return;
         }
        
@@ -139,7 +139,7 @@ class ThriftWorker extends Worker
         catch(\Exception $e)
         {
             \Thrift\Statistics\StatisticClient::report($this->name, $protocol->fname, 0, $e->getCode(), $e, $this->statisticAddress);
-            $this->notice('CODE:' . $e->getCode() . ' MESSAGE:' . $e->getMessage()."\n".$e->getTraceAsString()."\nCLIENT_IP:".$connection->getRemoteIp()."\n");
+            self::log('CODE:' . $e->getCode() . ' MESSAGE:' . $e->getMessage()."\n".$e->getTraceAsString()."\nCLIENT_IP:".$connection->getRemoteIp()."\n");
             $connection->send($e->getMessage());
         }
         
