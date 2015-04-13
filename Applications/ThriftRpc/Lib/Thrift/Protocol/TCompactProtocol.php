@@ -388,8 +388,7 @@ class TCompactProtocol extends TProtocol {
       throw new TProtocolException('Bad version in TCompact message');
     }
     $result += $this->readVarint($seqId);
-    // $name += $this->readString($name); 这个是thritf的一个bug？
-    $this->readString($name);
+    $result += $this->readString($name);
     $this->fname = $name;
 
     return $result;
