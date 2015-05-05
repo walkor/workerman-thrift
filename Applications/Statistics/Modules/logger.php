@@ -1,4 +1,16 @@
 <?php
+/**
+ * This file is part of workerman.
+ *
+ * Licensed under The MIT License
+ * For full copyright and license information, please see the MIT-LICENSE.txt
+ * Redistributions of files must retain the above copyright notice.
+ *
+ * @author walkor<walkor@workerman.net>
+ * @copyright walkor<walkor@workerman.net>
+ * @link http://www.workerman.net/
+ * @license http://www.opensource.org/licenses/mit-license.php MIT License
+ */
 namespace Statistics\Modules;
 function logger($module, $interface, $date, $start_time, $offset, $count)
 {
@@ -47,7 +59,7 @@ function getStasticLog($module, $interface , $start_time, $offset = '', $count =
     foreach($ip_list as $key=>$ip)
     {
         $offset = isset($offset_list[$key]) ? $offset_list[$key] : 0;
-        $request_buffer_array["$ip:$port"] = json_encode(array('cmd'=>'get_log', 'module'=>$module, 'interface'=>$interface, 'start_time'=>$start_time,  'offset'=>$offset, 'count'=>$count));
+        $request_buffer_array["$ip:$port"] = json_encode(array('cmd'=>'get_log', 'module'=>$module, 'interface'=>$interface, 'start_time'=>$start_time,  'offset'=>$offset, 'count'=>$count))."\n";
     }
 
     $read_buffer_array = multiRequest($request_buffer_array);
