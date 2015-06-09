@@ -12,11 +12,6 @@
  * @license http://www.opensource.org/licenses/mit-license.php MIT License
  */
 use Workerman\Worker;
-use \Thrift\Transport\TBufferedTransport;
-use \Thrift\Transport\TFramedTransport;
-use \Thrift\Protocol\TBinaryProtocol;
-use \Thrift\Protocol\TCompactProtocol;
-use \Thrift\Protocol\TJSONProtocol;
 
 
 define('THRIFT_ROOT', __DIR__);
