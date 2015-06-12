@@ -12,11 +12,6 @@
  * @license http://www.opensource.org/licenses/mit-license.php MIT License
  */
 use Workerman\Worker;
-use \Thrift\Transport\TBufferedTransport;
-use \Thrift\Transport\TFramedTransport;
-use \Thrift\Protocol\TBinaryProtocol;
-use \Thrift\Protocol\TCompactProtocol;
-use \Thrift\Protocol\TJSONProtocol;
 
 
 define('THRIFT_ROOT', __DIR__);
@@ -107,7 +102,7 @@ class ThriftWorker extends Worker
         $processor_class_name = "\\Services\\".$this->class."\\".$this->class.'Processor';
         if(!class_exists($processor_class_name))
         {
-            slef::log("Class $processor_class_name not found" );
+            ThriftWorker::log("Class $processor_class_name not found" );
             return;
         }
         
@@ -115,7 +110,7 @@ class ThriftWorker extends Worker
         $handler_class_name ="\\Services\\".$this->class."\\".$this->class.'Handler';
         if(!class_exists($handler_class_name))
         {
-            self::log("Class $handler_class_name not found" );
+            ThriftWorker::log("Class $handler_class_name not found" );
             return;
         }
        
@@ -151,7 +146,7 @@ class ThriftWorker extends Worker
         catch(\Exception $e)
         {
             \Thrift\Statistics\StatisticClient::report($this->name, $protocol->fname, 0, $e->getCode(), $e, $this->statisticAddress);
-            self::log('CODE:' . $e->getCode() . ' MESSAGE:' . $e->getMessage()."\n".$e->getTraceAsString()."\nCLIENT_IP:".$connection->getRemoteIp()."\n");
+            ThriftWorker::log('CODE:' . $e->getCode() . ' MESSAGE:' . $e->getMessage()."\n".$e->getTraceAsString()."\nCLIENT_IP:".$connection->getRemoteIp()."\n");
             $connection->send($e->getMessage());
         }
         
