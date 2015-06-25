@@ -118,7 +118,7 @@ $hello_worker->count = 16;
 $hello_worker->class = 'HelloWorld';
 
 // another worker
-//$another_worker = new ThriftWorker('tcp://0.0.0.0:9090');
+//$another_worker = new ThriftWorker('tcp://0.0.0.0:9091');
 //$another_worker->count = 16;
 //$another_worker->class = 'AnotherClass';
 
