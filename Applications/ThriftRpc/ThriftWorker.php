@@ -136,7 +136,7 @@ class ThriftWorker extends Worker
         // 执行处理
         try{
             // 先初始化一个
-            $protocol->fname == 'none';
+            $protocol->fname = 'none';
             // 统计开始时间
             \Thrift\Statistics\StatisticClient::tick();
             // 业务处理
