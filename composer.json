@@ -1,0 +1,10 @@
+{
+    "name"  : "workerman/thrift-rpc",
+    "type"  : "project",
+    "keywords": ["thrift","rpc"],
+    "homepage": "http://www.workerman.net",
+    "license" : "MIT",
+    "require": {
+        "workerman/workerman" : ">=3.3.0"
+    }
+}
