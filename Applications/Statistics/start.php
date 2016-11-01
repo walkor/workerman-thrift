@@ -11,7 +11,6 @@
  * @link http://www.workerman.net/
  * @license http://www.opensource.org/licenses/mit-license.php MIT License
  */
-require_once __DIR__ . '/../../Workerman/Autoloader.php';
 require_once __DIR__ .'/Config/Config.php';
 require_once __DIR__.'/Protocols/Statistic.php';
 require_once __DIR__.'/Bootstrap/StatisticProvider.php';
