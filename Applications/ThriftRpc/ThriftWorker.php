@@ -126,7 +126,7 @@ class ThriftWorker extends Worker
     public function onConnect($connection)
     {
         $socket = $connection->getSocket();
-        $t_socket = new Thrift\Transport\TSocket();
+        $t_socket = new Thrift\Transport\TSocket($connection->getRemoteIp(), $connection->getRemotePort());
         $t_socket->setHandle($socket);
         $transport_name = '\\Thrift\\Transport\\'.$this->thriftTransport;
         $transport = new $transport_name($t_socket);
