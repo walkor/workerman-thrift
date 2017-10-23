@@ -115,7 +115,7 @@ $hello_worker->class = 'HelloWorld';
 ```
 
 #### 运行
-进入workerman根目录运行
+进入workerman-thrift根目录运行
 ```shell
 php start.php start -d
 ```
