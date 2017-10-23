@@ -53,7 +53,7 @@ workerman不能运行在Window平台
 安装Thrift
 ----------
 
-###以ubuntu安装Thrift为例
+### 以ubuntu安装Thrift为例
 
  * 首先安装Thrift依赖的扩展包  
 `sudo apt-get install libboost-dev automake libtool flex bison pkg-config g++`  
@@ -65,7 +65,7 @@ workerman不能运行在Window平台
 使用Thrift
 ----------
 
-###定义一个Thrift的IDL文件 HelloWorld.thrift  
+### 定义一个Thrift的IDL文件 HelloWorld.thrift  
 
     namespace php Services.HelloWorld
     service HelloWorld
@@ -75,13 +75,13 @@ workerman不能运行在Window平台
     
 注意:命名空间统一使用 `Services.服务名`
 
-###编译接口文件
+### 编译接口文件
 `thrift -gen php:server HelloWorld.thrift`   
 
-###拷贝编译好的文件到workerman下的目录
+### 拷贝编译好的文件到workerman下的目录
 `cp ./gen-php/Services/HelloWorld /yourdir/workerman/applications/ThriftRpc/Services/ -r`
 
-###编写handler文件
+### 编写handler文件
 在Applications/ThriftRpc/Services/HelloWorld/目录下创建HelloWorldHandler.php如下
 
 ```php
@@ -128,12 +128,12 @@ workerman-Thrift客户端的使用
 workerman-Thrift客户端支持的特性
 ---------------------
 
-###支持故障节点自动踢出及故障节点恢复检测
+### 支持故障节点自动踢出及故障节点恢复检测
  * 当某个节点无法访问的时候，客户端会自动将该节点踢掉
  * 有一定的几率(默认5/10000，保证在有故障节点时业务成功率在99.95%以上)重新访问故障节点，用来探测故障节点是否已经存活
  * 故障节点自动踢出及节点恢复检测功能需要客户端PHP支持sysvshm
 
-###支持异步调用
+### 支持异步调用
  * workerman-Thrift客户端支持请求发送与接收返回分离
  * 业务可以通过一个客户端实例发送多个请求出去，但是不必立刻接收服务端回应
  * 待业务需要对应的服务端回应时再接收数据，使用服务器回应的数据
@@ -194,8 +194,8 @@ workerman-Thrift客户端使用示例
 workerman-Thrift及客户端目录结构
 =============================
 
-###客户端放在了workerman/applications/ThriftRpc/Clients目录下
-###在workerman里面客户端和服务端共用了Lib 和 Services 目录，单独使用客户端时，如果客户端没有这两个目录，需要从workerman上将这两个目录拷贝过去
+### 客户端放在了workerman/applications/ThriftRpc/Clients目录下
+### 在workerman里面客户端和服务端共用了Lib 和 Services 目录，单独使用客户端时，如果客户端没有这两个目录，需要从workerman上将这两个目录拷贝过去
 
     workerman/applications/ThriftRpc + 
                                   |- Clients +
@@ -218,7 +218,7 @@ workerman-Thrift及客户端目录结构
 性能测试
 ===============
 
-###环境
+### 环境
 ```
 系统：Debian GNU/Linux 6.0
 cpu ：Intel(R) Xeon(R) CPU E5-2420 0 @ 1.90GHz * 24
@@ -228,10 +228,10 @@ WorkerMan：开启24个Worker进程处理业务请求
 压测软件：loadrunner
 ```
 
-###业务逻辑
+### 业务逻辑
 `HelloWorld sayHello`
 
-###结果
+### 结果
 ```
 吞吐量：平均8200/S
 内存占用：24*12M=288M
